@@ -43,8 +43,9 @@ time.sleep(1)
 # for i in range(5):
 #     driver.execute_script("window.scrollBy(0, 1000);")  # 세로 방향으로 1000px씩 내림
 #     time.sleep(1)
-
-for i in range(1, Crawling_Data_Max+1):
+i = 1
+last_height = driver.execute_script("return document.body.scrollHeight")
+while True:
     webtoon_xpath = '//*[@id="content"]/div[1]/ul/li[{}]/a'.format(i)
     title_xpath = '//*[@id="content"]/div[1]/div/h2'
     plot_xpath = '//*[@id="content"]/div[1]/div/div[2]/p'
@@ -63,8 +64,11 @@ for i in range(1, Crawling_Data_Max+1):
             titles.append(title)
             plots.append(plot)
             categories.append(category)
+
         except:
             print('error', i)
+
+        i += 1   # i = i + 1
 
         # 4. 뒤로 가기 (브라우저의 뒤로가기 기능!)
         driver.back()
@@ -74,6 +78,10 @@ for i in range(1, Crawling_Data_Max+1):
     except:
         print('scrolling')
         driver.execute_script("window.scrollBy(0, 1000);")  # 세로 방향으로 1000px씩 내림
+        new_height = driver.execute_script("return document.body.scrollHeight")
+        if new_height == last_height:
+            break
+        last_height = new_height
         time.sleep(1)
 
 print(titles)
@@ -87,7 +95,7 @@ df_classification['category'] = categories
 df_classification.info()
 print(df_classification.head())
 
-# # df_classification.to_csv('./crawling_data/webtoon_category_plot.csv',index=False)
+df_classification.to_csv('./crawling_data/webtoon_category_plot.csv',index=False)
 
 # for i in range(5):
 #     time.sleep(0.5)
