@@ -11,12 +11,8 @@ import re
 import os
 
 os.makedirs('./models', exist_ok=True)
-raw_data = pd.read_csv('./crawling_data/webtoon_category_plot.csv')
-raw_data.info()
-print(raw_data.head())
-print(raw_data.category.value_counts())
 
-print(raw_data.columns)
+raw_data = pd.read_csv('./crawling_data/webtoons_csv')
 
 X = raw_data[['title', 'plot']]
 Y = raw_data['category']
@@ -104,7 +100,6 @@ title_pad = title_token.padding_text()
 plot_pad = plot_token.padding_text()
 
 X_pad = np.concatenate((title_pad, plot_pad), axis=1)
-
 print(X_pad)
 
 title_token.save_tokenizer('title')
