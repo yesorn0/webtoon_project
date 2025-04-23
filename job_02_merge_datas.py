@@ -1,8 +1,9 @@
 import pandas as pd
+from sklearn.utils import resample
 
 kakao_data = pd.read_csv('./crawling_data/kakao_category_plot.csv')
 naver_data = pd.read_csv('./crawling_data/naver_category_plot.csv')
-lezhin_data = pd.read_csv('./crawling_data/lezhin_category_plot.csv')
+lezhin_data = pd.read_csv('./crawling_data/Lezhin_webtoons.csv')
 
 print(kakao_data.head())
 print(naver_data.head())
@@ -49,4 +50,31 @@ print(raw_data.category.value_counts())
 
 print(raw_data.columns)
 
-raw_data.to_csv('./crawling_data/webtoons_csv', index = False)
+# UnderSampling 데이터 손실
+target_count = 4000
+balanced_data = []
+for category in raw_data['category'].unique():
+    subset = raw_data[raw_data['category'] == category]
+    if len(subset) > target_count:
+        subset = resample(subset, replace=False, n_samples=target_count, random_state=42)
+    else:
+        subset = subset  # 그대로
+    balanced_data.append(subset)
+
+df_balanced = pd.concat(balanced_data)
+print(df_balanced['category'].value_counts())
+
+
+# OverSampling 과적합 주의
+target_count = 3931
+balanced_data = []
+for category in df_balanced['category'].unique():
+    subset = df_balanced[df_balanced['category'] == category]
+    if len(subset) < target_count:
+        subset = resample(subset, replace=True, n_samples=target_count, random_state=42)
+    balanced_data.append(subset)
+
+df_balanced = pd.concat(balanced_data)
+print(df_balanced['category'].value_counts())
+df_balanced = df_balanced[df_balanced.category != '기타']
+df_balanced.to_csv('./crawling_data/webtoons_csv', index = False)

@@ -49,7 +49,7 @@ class BaseCrawler:
         return text
 
     def save_to_csv(self, platform_name):
-        filepath = f"{platform_name}_webtoons.csv"
+        filepath = f"./crawling_data/{platform_name}_webtoons.csv"
         df = pd.DataFrame({
             'title': self.titles,
             'plot': self.plots,
@@ -94,23 +94,28 @@ class KakaoCrawler(BaseCrawler):
         self.plot2_xpath = '//*[@id="__next"]/div/div[2]/div[1]/div/div[2]/div[2]/div/div/div[1]/div/div[2]/div[2]/div'
         self.info_xpath = '//*[@id="__next"]/div/div[2]/div[1]/div/div[2]/div[1]/div/div/div[2]/a'
 
-    def crawl(self):
+    def crawl(self, category):
         if self.links is None: return
         cnt = 0
-        titles, plots, categories = [], [], []
         for link in self.links:
             link = link + '?tab_type=about'
             self.driver.get(link)
             time.sleep(1)
             try :
-                titles.append(self.get_text(self.title_xpath))
-                plots.append(self.get_text(self.plot1_xpath))
+                self.titles.append(self.get_text(self.title_xpath))
+                self.plots.append(self.get_text(self.plot1_xpath))
+                self.categories.append(category)
             except :
-                plots.append(self.get_text(self.plot2_xpath))
+                try:
+                    self.plots.append(self.get_text(self.plot2_xpath))
+                except:
+                    cnt += 1
+                    print(f"not datas,{cnt}")
+                    pass
                 cnt += 1
                 print(f"not datas,{cnt}")
                 pass
-        return titles, plots
+        return self.titles, self.plots, self.categories
 
 class LezhinCrawler(BaseCrawler):
     def __init__(self):
@@ -120,10 +125,9 @@ class LezhinCrawler(BaseCrawler):
         self.plot_xpath = '/html/body/div[2]/section/div/div[1]/div[2]/p'
         self.info_xpath = '/html/body/div[2]/div[1]/div[2]/div[1]/div[1]/button'
 
-    def crawl(self):
+    def crawl(self, category):
         if self.links is None: return
         cnt = 0
-        titles, plots, categories = [], [], []
         for link in self.links:
             self.driver.get(link)
             time.sleep(1)
@@ -133,10 +137,11 @@ class LezhinCrawler(BaseCrawler):
             except:
                 pass
             try :
-                titles.append(self.get_text(self.title_xpath))
-                plots.append(self.get_text(self.plot_xpath))
+                self.titles.append(self.get_text(self.title_xpath))
+                self.plots.append(self.get_text(self.plot_xpath))
+                self.categories.append(category)
             except :
                 cnt += 1
                 print(f"not datas,{cnt}")
                 pass
-        return titles, plots
+        return self.titles, self.plots, self.categories

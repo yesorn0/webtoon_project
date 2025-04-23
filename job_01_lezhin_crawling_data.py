@@ -11,19 +11,21 @@ crawler = LezhinCrawler()
 
 # /html/body/div[2]/section/div[2]/div/button[2]
 # /html/body/div[2]/section/div[2]/div/button[11]
-
-categories = []
+titles, plots, categories = [], [], []
 for i in range(2, 12):
+    if i in [4, 8] : continue
     crawler.start_driver()
     time.sleep(1)
     category = crawler.driver.find_element(By.XPATH, '/html/body/div[2]/section/div[2]/div/button[{}]'.format(i))
-    categories.append(category.text)
     category.click()
     time.sleep(2)
     crawler.get_links('//*[@id="exhibit-genreplus-comic-list"]/ul/li/a')
-    crawler.crawl()
+    titles, plots, categories = crawler.crawl(category.text)
 
-crawler.close()
+print(titles[:5])
+print(plots[:5])
+print(categories[:5])
+
 crawler.categories = categories
 crawler.save_to_csv('Lezhin')
 
