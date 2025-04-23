@@ -11,15 +11,13 @@ import re
 import os
 
 os.makedirs('./models', exist_ok=True)
-raw_data = pd.read_csv('./crawling_data/webtoon_category_plot.csv')
-raw_data.info()
-print(raw_data.head())
-print(raw_data.category.value_counts())
 
-print(raw_data.columns)
+raw_data = pd.read_csv('./crawling_data/webtoons_csv')
 
-X = raw_data[['title', 'plot']]
-Y = raw_data['category']
+df = raw_data.dropna(axis=0)
+
+X = df[['title', 'plot']]
+Y = df['category']
 
 print(X.shape, Y.shape)
 
@@ -83,6 +81,9 @@ class ToTokenizer:
 # test_plot = preprocess_text(X.at[0, 'plot'])
 # print(test_title, test_plot)
 
+print(X.describe())
+print(Y.describe())
+
 titles = X['title'].apply(preprocess_text)
 plots = X['plot'].apply(preprocess_text)
 
@@ -104,7 +105,6 @@ title_pad = title_token.padding_text()
 plot_pad = plot_token.padding_text()
 
 X_pad = np.concatenate((title_pad, plot_pad), axis=1)
-
 print(X_pad)
 
 title_token.save_tokenizer('title')

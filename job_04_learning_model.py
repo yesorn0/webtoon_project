@@ -1,53 +1,54 @@
+import pickle
 import numpy as np
 import matplotlib.pyplot as plt
 from keras.models import *
 from keras.layers import *
+from tensorflow.keras.preprocessing.text import Tokenizer
 from tensorflow.keras.preprocessing.sequence import pad_sequences
+from tensorflow.keras.callbacks import ModelCheckpoint, EarlyStopping
 
-X_train = np.load('./crawling_data/X_train_wordsize_2544_10312.npy', allow_pickle=True)
-X_test = np.load('./crawling_data/X_test_wordsize_2544_10312.npy', allow_pickle=True)
-y_train = np.load('./crawling_data/y_train_wordsize_2544_10312.npy', allow_pickle=True)
-y_test = np.load('./crawling_data/y_test_wordsize_2544_10312.npy', allow_pickle=True)
+title_max_len, plot_max_len = 20, 327
+title_word_size, plot_word_size = 8945, 29823
 
-print(X_train.shape, X_test.shape, y_train.shape, y_test.shape)
+X_train = np.load(f'./crawling_data/X_train_wordsize_{title_word_size}_{plot_word_size}.npy', allow_pickle=True)
+X_test = np.load(f'./crawling_data/X_test_wordsize_{title_word_size}_{plot_word_size}.npy', allow_pickle=True)
+y_train = np.load(f'./crawling_data/y_train_wordsize_{title_word_size}_{plot_word_size}.npy', allow_pickle=True)
+y_test = np.load(f'./crawling_data/y_test_wordsize_{title_word_size}_{plot_word_size}.npy', allow_pickle=True)
 
-# X_train과 X_test에서 첫 번째 샘플을 출력
-print("First sample in X_train:", X_train[0])
-print("First sample in X_test:", X_test[0])
+print(X_train.shape, X_test.shape)
+print(y_train.shape, y_test.shape)
 
-# 샘플 길이가 맞는지 확인
-print("Length of first sample in X_train:", len(X_train[0]))
-print("Length of first sample in X_test:", len(X_test[0]))
+title_input = X_train[:, :title_max_len]
+plot_input = X_train[:, title_max_len:title_max_len + plot_max_len]
 
-model = Sequential()
-model.add(Embedding(12856, 300))
-model.build(input_shape=(None, 164))
-model.add(Conv1D(64, kernel_size=5, padding='same', activation='relu'))
-model.add(MaxPool1D(pool_size = 1))
-model.add(LSTM(128, activation='tanh', return_sequences=True))
-model.add(Dropout(0.3))
-model.add(LSTM(256, activation='tanh', return_sequences=True))
-model.add(Dropout(0.3))
-model.add(LSTM(512, activation='tanh', return_sequences=True))
-model.add(Dropout(0.3))
-model.add(LSTM(256, activation='tanh', return_sequences=True))
-model.add(Dropout(0.3))
-model.add(LSTM(128, activation='tanh', return_sequences=True))
-model.add(Dropout(0.3))
-model.add(LSTM(64, activation='tanh'))
-model.add(Dropout(0.3))
-model.add(Flatten())
-model.add(Dense(128, activation='relu'))
-model.add(Dense(10, activation='softmax'))
-model.summary()
+title_test = X_test[:, :title_max_len]
+plot_test = X_test[:, title_max_len:title_max_len+plot_max_len]
 
-model.compile(loss='categorical_crossentropy', optimizer='adam',
-              metrics=['accuracy'])
-fit_hist = model.fit(X_train, y_train, batch_size=128,
-                     epochs=10, validation_data=(X_test, y_test))
-score = model.evaluate(X_test, y_test, verbose=0)
+title_model = Sequential()
+title_model.add(Embedding(title_word_size, 128))
+title_model.build(input_shape=(None, title_max_len))
+title_model.add(Conv1D(32, kernel_size=5, padding='same', activation='relu'))
+title_model.add(MaxPool1D(pool_size = 2))
+title_model.add(LSTM(128, activation='tanh', return_sequences=True))
+title_model.add(Dropout(0.3))
+title_model.add(LSTM(64, activation='tanh'))
+title_model.add(Dropout(0.3))
+title_model.add(Dense(64, activation='relu'))
+title_model.add(Dense(y_train.shape[1], activation='softmax'))
+
+title_model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
+title_model.summary()
+
+# 저장 경로 설정
+checkpoint_path = './models/title_lstm.h5'
+checkpoint = ModelCheckpoint(checkpoint_path, monitor='val_loss', save_best_only=True)
+
+# 훈련
+fit_hist = title_model.fit(title_input, y_train, epochs=10, batch_size=32,
+                           validation_data=(title_test, y_test), callbacks=[checkpoint])
+
+score = title_model.evaluate(title_test, y_test, verbose=0)
 print('Final test set accuracy', score[1])
-model.save('./models/news_section_classfication_model_{}.h5'.format(score[1]))
 
 plt.plot(fit_hist.history['val_accuracy'], label='val accuracy')
 plt.plot(fit_hist.history['accuracy'], label='accuracy')
